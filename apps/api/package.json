@@ -1,0 +1,35 @@
+{
+  "name": "@lost-found/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test dist/modules/reports/reports.service.spec.js"
+  },
+  "dependencies": {
+    "@lost-found/contracts": "*",
+    "@nestjs/common": "latest",
+    "@nestjs/config": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/platform-express": "latest",
+    "@nestjs/swagger": "latest",
+    "@supabase/supabase-js": "^2.111.0",
+    "class-transformer": "latest",
+    "class-validator": "latest",
+    "pg": "latest",
+    "reflect-metadata": "latest",
+    "rxjs": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "latest",
+    "@nestjs/testing": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/pg": "latest",
+    "ts-node": "latest",
+    "typescript": "^5.9.3"
+  }
+}

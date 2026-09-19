@@ -1,0 +1,29 @@
+{
+  "name": "@lost-found/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "prisma generate",
+    "typecheck": "prisma validate",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "admin:create-test": "tsx src/create-test-admin.ts",
+    "master-list:check": "tsx src/import-master-list.ts ../../private/cbea-master-list-test.csv",
+    "master-list:import": "tsx src/import-master-list.ts ../../private/cbea-master-list-test.csv --apply",
+    "db:seed": "tsx src/seed-initial-data.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "latest",
+    "@prisma/client": "latest",
+    "@supabase/supabase-js": "^2.111.0",
+    "csv-parse": "latest",
+    "pg": "latest"
+  },
+  "devDependencies": {
+    "@types/pg": "latest",
+    "dotenv": "^17.4.1",
+    "prisma": "latest",
+    "tsx": "latest"
+  }
+}

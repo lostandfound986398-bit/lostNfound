@@ -29,7 +29,7 @@ Use the same replacement project in both environment files:
 
 - In `apps/api/.env`, set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` from the project's API settings.
 - In `apps/web/.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to that project's URL and publishable key. The secret key belongs only in the API environment.
-- Copy the session pooler connection URI from **Connect** into `DATABASE_URL` and `DIRECT_URL` in `apps/api/.env`. Use the exact host supplied by Supabase and URL-encode special characters in the database password. The API and database tools currently prefer `DIRECT_URL`.
+- Copy the transaction pooler URI from **Connect** into `DATABASE_URL` in `apps/api/.env`. Copy the direct connection URI into `DIRECT_URL`. Use the exact hosts supplied by Supabase and URL-encode special characters in the database password. The deployed API uses the pooler; migrations and seed scripts prefer the direct connection.
 
 The database tools load `apps/api/.env`; a separate database environment file is not required.
 See Supabase's [connection guide](https://supabase.com/docs/guides/database/connecting-to-postgres) and [API key guide](https://supabase.com/docs/guides/getting-started/api-keys).
@@ -46,6 +46,19 @@ Restart the development servers after changing environment values.
 
 Connect this folder to the intended GitHub repository after confirming its URL.
 Local `.env` files and `private/` are excluded by `.gitignore`; commit only the example environment files.
+
+## Vercel deployment
+
+This repository uses two Vercel projects connected to the same GitHub repository:
+
+- `lost-n-found` — root directory `apps/web`, Next.js frontend
+- `lost-n-found-api` — root directory `apps/api`, NestJS API
+
+Set the API project's production and preview variables to `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DATABASE_URL`, `DIRECT_URL`, `WEB_ORIGIN`, `SITE_URL`, and `NODE_ENV=production`. Use the Supabase transaction-pooler URI for `DATABASE_URL` so serverless instances do not consume direct database connections.
+
+Set the web project's production and preview variables to `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_API_URL`, and `NEXT_PUBLIC_SITE_URL`. `NEXT_PUBLIC_API_URL` must be the deployed `lost-n-found-api` URL; `NEXT_PUBLIC_SITE_URL`, `WEB_ORIGIN`, and `SITE_URL` must use the deployed frontend URL.
+
+Never add `SUPABASE_SECRET_KEY`, database passwords, or connection strings to an `.env.example` file or a `NEXT_PUBLIC_*` variable. After the variables are configured, run `npm run db:setup` once against the target Supabase project and deploy the API before the web app.
 
 ## Student workflow and client demo
 

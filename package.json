@@ -16,7 +16,8 @@
     "db:validate": "npm run db:validate --workspace=@lost-found/database",
     "admin:create-test": "npm run admin:create-test --workspace=@lost-found/database",
     "master-list:check": "npm run master-list:check --workspace=@lost-found/database",
-    "master-list:import": "npm run master-list:import --workspace=@lost-found/database"
+    "master-list:import": "npm run master-list:import --workspace=@lost-found/database",
+    "db:setup": "npm run db:setup --workspace=@lost-found/database"
   },
   "devDependencies": {
     "prettier": "latest",

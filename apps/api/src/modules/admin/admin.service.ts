@@ -7,6 +7,39 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 export class AdminService {
   constructor(private readonly database: DatabaseService) {}
 
+  async reportDetail(user: LocalUser, id: string) {
+    this.admin(user);
+    const result = await this.database.query(
+      `SELECT r.id, r.title, r.type, r.status, r.color,
+              r.public_description AS "publicDescription",
+              r.private_verification_details AS "privateVerificationDetails",
+              r.occurred_at AS "occurredAt", r.created_at AS "createdAt",
+              c.name AS category, l.name AS location,
+              u.display_name AS "reporterName", u.email AS "reporterEmail",
+              mp.school_id AS "schoolId"
+       FROM item_reports r
+       JOIN categories c ON c.id = r.category_id
+       JOIN locations l ON l.id = r.location_id
+       JOIN users u ON u.id = r.reporter_id
+       JOIN master_people mp ON mp.id = u.master_person_id
+       WHERE r.id = $1`, [id],
+    );
+    if (!result.rows[0]) throw new NotFoundException("Report not found.");
+    const images = await this.database.query(
+      `SELECT storage_key AS "storageKey" FROM item_images WHERE report_id = $1 ORDER BY is_primary DESC, created_at`, [id],
+    );
+    const matches = await this.database.query(
+      `SELECT other.id, other.title, other.status AS "reportStatus", m.status,
+              m.score, m.matched_reasons AS reasons, l.name AS location
+       FROM item_matches m
+       JOIN item_reports other ON other.id = CASE WHEN m.lost_report_id = $1 THEN m.found_report_id ELSE m.lost_report_id END
+       JOIN locations l ON l.id = other.location_id
+       WHERE (m.lost_report_id = $1 OR m.found_report_id = $1) AND m.status <> 'DISMISSED'
+       ORDER BY m.score DESC`, [id],
+    );
+    return { ...result.rows[0], images: images.rows, matches: matches.rows };
+  }
+
   private admin(user: LocalUser) {
     if (user.role !== "ADMIN") throw new ForbiddenException("Administrator access is required.");
   }

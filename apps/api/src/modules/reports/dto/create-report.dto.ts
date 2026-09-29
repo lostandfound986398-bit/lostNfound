@@ -1,5 +1,27 @@
+import { Type } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDateString, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsInt,
+  Max,
+  Min,
+  ValidateNested,
+  IsDateString,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
+
+export class ReportImageDto {
+  @IsString() @IsNotEmpty() storageKey!: string;
+  @IsIn(["image/jpeg", "image/png", "image/webp"]) mimeType!: string;
+  @IsInt() @Min(1) @Max(10485760) sizeBytes!: number;
+  @IsOptional() @IsBoolean() isPrimary?: boolean;
+}
 
 export class CreateReportDto {
   @ApiProperty({ enum: ["LOST", "FOUND"] })
@@ -31,13 +53,18 @@ export class CreateReportDto {
   @IsDateString()
   occurredAt!: string;
 
-  @ApiPropertyOptional({ description: "Details safe to show to authenticated searchers" })
+  @ApiPropertyOptional({
+    description: "Details safe to show to authenticated searchers",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   publicDescription?: string;
 
-  @ApiPropertyOptional({ description: "Confidential ownership details visible only during verification" })
+  @ApiPropertyOptional({
+    description:
+      "Confidential ownership details visible only during verification",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)
@@ -45,7 +72,9 @@ export class CreateReportDto {
 
   @ApiPropertyOptional({ description: "Uploaded image details" })
   @IsOptional()
-  images?: { storageKey: string; mimeType: string; sizeBytes: number; isPrimary?: boolean }[];
+  @IsArray()
+  @ArrayMaxSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => ReportImageDto)
+  images?: ReportImageDto[];
 }
-
-

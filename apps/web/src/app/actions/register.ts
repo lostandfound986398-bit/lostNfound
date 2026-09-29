@@ -20,7 +20,7 @@ export async function register(formData: FormData) {
         schoolId: value(formData, "schoolId"),
         fullName: value(formData, "fullName"),
         email: value(formData, "email"),
-        password: value(formData, "password"),
+        password: String(formData.get("password") ?? ""),
       }),
       cache: "no-store",
     });
@@ -28,6 +28,8 @@ export async function register(formData: FormData) {
     redirect("/register?error=connection_error");
   }
 
+  if (response.status === 409) redirect("/register?error=already_registered");
+  if (response.status >= 500) redirect("/register?error=connection_error");
   if (!response.ok) redirect("/register?error=verification_failed");
   redirect("/register?success=check_email");
 }

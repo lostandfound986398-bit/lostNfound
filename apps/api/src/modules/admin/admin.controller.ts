@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, Res, UseGuards } from "@nestjs/common";
 import type { Response } from "express";
 import { AuthGuard, type AuthenticatedRequest } from "../auth/auth.guard";
 import { AdminService } from "./admin.service";
@@ -8,6 +8,11 @@ import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
 @Controller("admin")
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
+
+  @Get("reports/:id")
+  report(@Req() req: AuthenticatedRequest, @Param("id", new ParseUUIDPipe()) id: string) {
+    return this.admin.reportDetail(req.user, id);
+  }
 
   @Get("dashboard")
   dashboard(@Req() req: AuthenticatedRequest) {

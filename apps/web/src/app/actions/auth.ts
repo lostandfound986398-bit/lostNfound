@@ -9,7 +9,7 @@ function message(value: FormDataEntryValue | null) {
 
 export async function login(formData: FormData) {
   const email = message(formData.get("email"));
-  const password = message(formData.get("password"));
+  const password = String(formData.get("password") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) redirect("/?error=invalid_credentials");
@@ -25,18 +25,18 @@ export async function logout() {
 export async function requestPasswordReset(formData: FormData) {
   const email = message(formData.get("email"));
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback?next=/account/update-password`,
   });
+  if (error) redirect("/forgot-password?error=1");
   redirect("/forgot-password?sent=1");
 }
 
 export async function updatePassword(formData: FormData) {
-  const password = message(formData.get("password"));
+  const password = String(formData.get("password") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) redirect("/account/update-password?error=1");
   await supabase.auth.signOut();
   redirect("/?password_updated=1");
 }
-

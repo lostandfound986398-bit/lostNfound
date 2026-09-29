@@ -11,7 +11,10 @@
     "admin:create-test": "tsx src/create-test-admin.ts",
     "master-list:check": "tsx src/import-master-list.ts ../../private/cbea-master-list-test.csv",
     "master-list:import": "tsx src/import-master-list.ts ../../private/cbea-master-list-test.csv --apply",
-    "db:seed": "tsx src/seed-initial-data.ts"
+    "db:seed": "tsx src/seed-initial-data.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "photos:cleanup": "tsx src/cleanup-report-photos.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "latest",

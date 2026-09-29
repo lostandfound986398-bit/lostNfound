@@ -55,8 +55,14 @@ async function main() {
     authUser = data.user;
   }
 
-  const adapter = new PrismaPg({ connectionString });
-  const prisma = new PrismaClient({ adapter });
+  const adapter = new PrismaPg({
+    connectionString,
+    ssl: { rejectUnauthorized: process.env.NODE_ENV === "production" },
+  });
+  const prisma = new PrismaClient({
+    adapter,
+    transactionOptions: { maxWait: 20000, timeout: 30000 },
+  });
   try {
     await prisma.$transaction(async (transaction) => {
       const conflictingUser = await transaction.user.findUnique({ where: { email } });

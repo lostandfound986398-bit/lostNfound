@@ -1,7 +1,14 @@
-import { Check, CheckCircle2, FileDown, HelpCircle, RefreshCw, X } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  FileDown,
+  HelpCircle,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { AdminPageHeader, FilterBar } from "@/components/admin-page";
 import { authenticatedApi } from "@/lib/api/authenticated";
-import { reviewClaim } from "@/app/actions/claim-review";
+import { ClaimReviewForm } from "@/components/claim-review-form";
 
 interface Claim {
   id: string;
@@ -9,7 +16,7 @@ interface Claim {
   claimantName: string;
   claimantEmail: string;
   status: string;
-  ownershipAnswers: Record<string, string>;
+  ownershipAnswers: Record<string, string | string[]>;
   createdAt: string;
 }
 
@@ -33,7 +40,11 @@ export default async function ClaimsPage() {
         title="Claim verification & item release portal"
         description="Review ownership answers, approve claims for CBEA Building pickup, and mark items as released upon identity verification."
         action={
-          <a className="button button--ghost" href={`${apiUrl}/api/v1/admin/export?kind=claims`} download>
+          <a
+            className="button button--ghost"
+            href={`${apiUrl}/api/v1/admin/export?kind=claims`}
+            download
+          >
             <FileDown size={17} /> Export claims
           </a>
         }
@@ -64,112 +75,101 @@ export default async function ClaimsPage() {
 
       <section className="panel table-panel">
         <FilterBar>
-          <span>{claims.length} claim record{claims.length === 1 ? "" : "s"}</span>
+          <span>
+            {claims.length} claim record{claims.length === 1 ? "" : "s"}
+          </span>
         </FilterBar>
 
         <div className="table-scroll">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Item details</th>
-                <th>Claimant</th>
-                <th>Ownership proof</th>
-                <th>Status</th>
-                <th>Submitted</th>
-                <th>Actions</th>
+          <table
+            className="data-table responsive-claims"
+            role="table"
+            aria-label="Ownership requests to review"
+          >
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col" role="columnheader">
+                  Item details
+                </th>
+                <th scope="col" role="columnheader">
+                  Claimant
+                </th>
+                <th scope="col" role="columnheader">
+                  Ownership proof
+                </th>
+                <th scope="col" role="columnheader">
+                  Status
+                </th>
+                <th scope="col" role="columnheader">
+                  Submitted
+                </th>
+                <th scope="col" role="columnheader">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {claims.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem" }}>
+                  <td
+                    colSpan={6}
+                    style={{ textAlign: "center", padding: "2rem" }}
+                  >
                     No claims submitted yet.
                   </td>
                 </tr>
               ) : (
                 claims.map((claim) => {
-                  const proofText = typeof claim.ownershipAnswers === "object" && claim.ownershipAnswers !== null
-                    ? Object.values(claim.ownershipAnswers).join(" · ")
-                    : String(claim.ownershipAnswers || "—");
+                  const proofText =
+                    typeof claim.ownershipAnswers === "object" &&
+                    claim.ownershipAnswers !== null
+                      ? Object.values(claim.ownershipAnswers).flat().join(" · ")
+                      : String(claim.ownershipAnswers || "—");
 
                   const statusClass =
                     claim.status === "APPROVED"
                       ? "status--matched"
                       : claim.status === "RELEASED"
-                      ? "status--matched"
-                      : claim.status === "REJECTED"
-                      ? "status--pending"
-                      : "status--pending";
+                        ? "status--matched"
+                        : claim.status === "REJECTED"
+                          ? "status--pending"
+                          : "status--pending";
 
                   return (
-                    <tr key={claim.id}>
-                      <td>
+                    <tr key={claim.id} role="row">
+                      <td data-label="Item" role="cell">
                         <b>{claim.title}</b>
                         <small>Found item</small>
                       </td>
-                      <td>
+                      <td data-label="Claimant" role="cell">
                         <b>{claim.claimantName}</b>
                         <small>{claim.claimantEmail || "Verified user"}</small>
                       </td>
-                      <td style={{ maxWidth: "250px", wordBreak: "break-word" }}>{proofText}</td>
-                      <td>
+                      <td
+                        data-label="Ownership details"
+                        role="cell"
+                        style={{ maxWidth: "250px", wordBreak: "break-word" }}
+                      >
+                        {proofText}
+                      </td>
+                      <td data-label="Status" role="cell">
                         <span className={`status ${statusClass}`}>
                           {claim.status === "APPROVED"
                             ? "Approved (CBEA Pickup)"
                             : claim.status === "RELEASED"
-                            ? "Released to Owner"
-                            : claim.status.replace("_", " ")}
+                              ? "Released to Owner"
+                              : claim.status.replace("_", " ")}
                         </span>
                       </td>
-                      <td>{new Date(claim.createdAt).toLocaleDateString()}</td>
-                      <td>
-                        <div className="row-actions" style={{ gap: "6px" }}>
-                          {claim.status === "PENDING" && (
-                            <>
-                              <form action={reviewClaim}>
-                                <input name="id" type="hidden" value={claim.id} />
-                                <input name="status" type="hidden" value="APPROVED" />
-                                <button className="approve" title="Approve & Notify Student for Pickup at CBEA Building">
-                                  <Check size={15} /> Approve
-                                </button>
-                              </form>
-                              <form action={reviewClaim}>
-                                <input name="id" type="hidden" value={claim.id} />
-                                <input name="status" type="hidden" value="NEEDS_INFORMATION" />
-                                <button className="button button--secondary button--sm" title="Request Information">
-                                  <HelpCircle size={15} /> Info
-                                </button>
-                              </form>
-                              <form action={reviewClaim}>
-                                <input name="id" type="hidden" value={claim.id} />
-                                <input name="status" type="hidden" value="REJECTED" />
-                                <button className="reject" title="Reject Claim">
-                                  <X size={15} /> Reject
-                                </button>
-                              </form>
-                            </>
-                          )}
-
-                          {claim.status === "APPROVED" && (
-                            <form action={reviewClaim}>
-                              <input name="id" type="hidden" value={claim.id} />
-                              <input name="status" type="hidden" value="RELEASED" />
-                              <button className="button button--primary button--sm" title="Verify Identity & Mark Released">
-                                <CheckCircle2 size={15} /> Mark Released
-                              </button>
-                            </form>
-                          )}
-
-                          {claim.status === "RELEASED" && (
-                            <span className="status status--matched" style={{ fontSize: "0.75rem" }}>
-                              <CheckCircle2 size={13} style={{ display: "inline", marginRight: "4px" }} /> Released
-                            </span>
-                          )}
-
-                          {claim.status === "REJECTED" && (
-                            <span className="muted" style={{ fontSize: "0.75rem" }}>Rejected</span>
-                          )}
-                        </div>
+                      <td data-label="Submitted" role="cell">
+                        {new Date(claim.createdAt).toLocaleDateString()}
+                      </td>
+                      <td data-label="Review decision" role="cell">
+                        <ClaimReviewForm
+                          key={`${claim.id}-${claim.status}`}
+                          id={claim.id}
+                          status={claim.status}
+                        />
                       </td>
                     </tr>
                   );

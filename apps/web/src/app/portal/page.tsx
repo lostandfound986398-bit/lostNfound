@@ -1,96 +1,63 @@
 import Link from "next/link";
-import { FilePlus2, PackageOpen, Search, ShieldCheck, WalletCards } from "lucide-react";
+import { Search, PackageOpen } from "lucide-react";
 import type { ItemReportSummary } from "@lost-found/contracts";
-import { createClient } from "@/lib/supabase/server";
-
-async function getRecentFoundReports(): Promise<ItemReportSummary[]> {
-  try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/reports?type=FOUND`, { cache: "no-store" });
-    if (response.ok) {
-      const data = (await response.json()) as ItemReportSummary[];
-      return data.slice(0, 6);
-    }
-  } catch {}
-  return [];
-}
+import { portalData } from "@/lib/portal";
+import { ItemCard } from "@/components/item-card";
+import { LoadError, PortalFeedback } from "@/components/portal-feedback";
 
 export default async function UserPortal() {
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const displayName = userData?.user?.user_metadata?.full_name || userData?.user?.email?.split("@")[0] || "Student";
-
-  const recentReports = await getRecentFoundReports();
-
+  const reports = await portalData<ItemReportSummary[]>("/reports?type=FOUND");
   return (
-    <main>
-      <div className="portal-content">
-        <section className="hero-copy">
-          <span className="eyebrow">Welcome back, {displayName}</span>
-          <h1>What are you looking for?</h1>
-          <p>Search verified campus reports using an item name, color, category, or location. We will show the safest possible matches.</p>
-        </section>
-
-        <form action="/portal/search" className="finder" method="GET">
-          <label>
-            <Search size={20} />
-            <input aria-label="Search lost and found reports" name="q" placeholder="Try “brown wallet near the library”" />
-          </label>
-          <button className="button button--primary" type="submit">Search reports</button>
-        </form>
-
-        <section className="quick-actions" aria-label="Quick actions">
-          <Link className="quick-card" href="/portal/report/lost">
-            <span className="quick-card__icon"><Search size={20} /></span>
-            <span><strong>Report a lost item</strong><small>Tell us what went missing and where.</small></span>
-          </Link>
-          <Link className="quick-card" href="/portal/report/found">
-            <span className="quick-card__icon"><PackageOpen size={20} /></span>
-            <span><strong>Report a found item</strong><small>Help return something you discovered.</small></span>
-          </Link>
-          <Link className="quick-card" href="/portal/reports">
-            <span className="quick-card__icon"><FilePlus2 size={20} /></span>
-            <span><strong>Track my reports</strong><small>Review matches, claims, and updates.</small></span>
-          </Link>
-        </section>
-
-        <section>
-          <div className="section-head">
-            <h2>Recently found on campus</h2>
-            <Link href="/portal/search">View all reports</Link>
-          </div>
-
-          {recentReports.length === 0 ? (
-            <p className="muted" style={{ padding: "1.5rem 0" }}>No found item reports have been posted yet.</p>
-          ) : (
-            <div className="item-grid">
-              {recentReports.map((report) => (
-                <article className="item-card" key={report.id}>
-                  <div className="item-card__visual">
-                    {report.imageUrl ? (
-                      <img src={report.imageUrl} alt={report.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <WalletCards size={54} strokeWidth={1.35} />
-                    )}
-                  </div>
-                  <div className="item-card__body">
-                    <div className="item-card__meta">
-                      <span className="status status--matched">Found</span>
-                      <span className="muted">{new Date(report.occurredAt).toLocaleDateString()}</span>
-                    </div>
-                    <h3>{report.title}</h3>
-                    <p>{report.category} · {report.location}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <div className="info-box">
-          <ShieldCheck size={20} />
-          <span>For your safety, contact information and private identifying details are never shown in public results.</span>
-        </div>
+    <main className="portal-content">
+      <section className="hero-copy">
+        <span className="eyebrow">Campus lost and found</span>
+        <h1>How can we help?</h1>
+        <p>Choose what happened. We'll help you take the next step.</p>
+      </section>
+      <section className="journey-choices" aria-label="Start here">
+        <Link className="journey-choice" href="/portal/search">
+          <Search size={30} />
+          <h2>I lost something</h2>
+          <p>
+            Look through found items. If yours isn't there, report it missing.
+          </p>
+          <strong>Look for my item →</strong>
+        </Link>
+        <Link className="journey-choice" href="/portal/report/found">
+          <PackageOpen size={30} />
+          <h2>I found something</h2>
+          <p>Describe what you found so its owner can recognize it.</p>
+          <strong>Report a found item →</strong>
+        </Link>
+      </section>
+      <div className="journey-tracking">
+        <span>Already submitted something?</span>
+        <Link href="/portal/reports">Items I reported</Link>
+        <Link href="/portal/claims">My ownership requests</Link>
       </div>
+      <section>
+        <div className="section-head">
+          <h2>Recently found items</h2>
+          <Link href="/portal/search">Browse all</Link>
+        </div>
+        {reports === null ? (
+          <LoadError href="/portal" />
+        ) : reports.length === 0 ? (
+          <PortalFeedback title="No found items listed yet">
+            <p>
+              You can still report your missing item so there is a record of
+              what to look for.
+            </p>
+            <Link href="/portal/report/lost">Report my missing item →</Link>
+          </PortalFeedback>
+        ) : (
+          <div className="item-grid">
+            {reports.slice(0, 6).map((report) => (
+              <ItemCard key={report.id} report={report} />
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

@@ -16,7 +16,10 @@ export class DatabaseService implements OnApplicationShutdown {
       throw new Error("DIRECT_URL or DATABASE_URL is required.");
     this.pool = new Pool({
       connectionString,
-      ssl: { rejectUnauthorized: config.get("NODE_ENV") === "production" },
+      // Supabase's managed pooler can present a certificate chain that is not
+      // in Vercel's Node trust store. Keep TLS enabled, but let the pooler
+      // terminate it without Node rejecting that managed chain.
+      ssl: { rejectUnauthorized: false },
       max: 3,
     });
     // Vercel Fluid compute can reuse a warm NestJS instance. This releases

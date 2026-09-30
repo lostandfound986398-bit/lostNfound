@@ -87,6 +87,7 @@ export default async function AdminReportsPage({
         ) : (
           <section className="admin-card-grid">
             {reports.map((report) => {
+              const reportHref = `/admin/reports/${report.id}`;
               const status = report.status;
               const statusClass =
                 status === "OPEN"
@@ -97,27 +98,30 @@ export default async function AdminReportsPage({
 
               return (
                 <article className="management-card" key={report.id}>
-                  <div className="management-card__visual">
+                  <Link
+                    className="management-card__visual"
+                    href={reportHref}
+                    aria-label={`Review ${report.title}`}
+                  >
                     {report.imageUrl ? (
-                      <img
-                        src={report.imageUrl}
-                        alt={report.title}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
+                      <img src={report.imageUrl} alt={report.title} />
                     ) : (
                       <Search size={56} strokeWidth={1.25} />
                     )}
                     <span className={`status ${statusClass}`}>
                       {status.replace("_", " ")}
                     </span>
-                  </div>
+                  </Link>
                   <div className="management-card__body">
                     <small>{report.category}</small>
-                    <h2>{report.title}</h2>
+                    <h2>
+                      <Link
+                        className="management-card__title-link"
+                        href={reportHref}
+                      >
+                        {report.title}
+                      </Link>
+                    </h2>
                     <dl>
                       <div>
                         <dt>Location</dt>
@@ -137,7 +141,7 @@ export default async function AdminReportsPage({
                     <div className="card-actions">
                       <Link
                         className="button button--secondary"
-                        href={`/admin/reports/${report.id}`}
+                        href={reportHref}
                         aria-label={`Review ${report.title}`}
                       >
                         <Eye size={16} /> Review report

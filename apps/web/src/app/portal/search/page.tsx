@@ -68,9 +68,6 @@ export default async function SearchPage({
             staff an ownership request.
           </p>
         </div>
-        <Link className="button button--secondary" href="/portal/report/lost">
-          Report my missing item
-        </Link>
       </div>
       <form className="panel journey-search" action="/portal/search">
         <label>
@@ -175,6 +172,16 @@ export default async function SearchPage({
               <ItemCard key={report.id} report={report} />
             ))}
           </div>
+          <section className="panel search-next-step">
+            <h2>Still haven’t found your item?</h2>
+            <p>If none of these match, let staff know what to look for.</p>
+            <Link
+              className="button button--secondary"
+              href="/portal/report/lost"
+            >
+              Report my missing item
+            </Link>
+          </section>
         </>
       )}
     </main>

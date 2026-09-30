@@ -25,51 +25,27 @@ export default async function UserPortal() {
       <section className="student-dashboard__hero">
         <div className="student-dashboard__intro">
           <span className="eyebrow eyebrow--light">Student dashboard</span>
-          <h1>What do you need help with today?</h1>
-          <p>
-            Search for something you lost, report an item you found, and keep
-            track of every update in one place.
-          </p>
-        </div>
-        <div
-          className="student-dashboard__summary"
-          aria-label="Your activity summary"
-        >
-          <Link href="/portal/reports">
-            <ClipboardList size={20} aria-hidden="true" />
-            <span>
-              <strong>{myReports?.length ?? "—"}</strong>
-              <small>My reports</small>
-            </span>
-          </Link>
-          <Link href="/portal/claims">
-            <ShieldCheck size={20} aria-hidden="true" />
-            <span>
-              <strong>{myClaims?.length ?? "—"}</strong>
-              <small>Requests</small>
-            </span>
-          </Link>
-          <Link href="/portal/updates">
-            <Bell size={20} aria-hidden="true" />
-            <span>
-              <strong>{updateCount?.unread ?? "—"}</strong>
-              <small>Unread updates</small>
-            </span>
-          </Link>
+          <h1>What do you need help with?</h1>
+          <p>Find what’s missing. Help return what’s found.</p>
         </div>
       </section>
 
+      <Link className="dashboard-search" href="/portal/search">
+        <span className="dashboard-search__icon">
+          <Search size={24} aria-hidden="true" />
+        </span>
+        <span>
+          <small>Search found items · Start here</small>
+          <strong>Search for your lost item</strong>
+          <span>Check if your item has already been found.</span>
+        </span>
+        <ArrowRight size={20} aria-hidden="true" />
+      </Link>
+
       <section
         className="student-dashboard__start"
-        aria-labelledby="start-heading"
+        aria-label="Lost and found actions"
       >
-        <div className="student-section-heading">
-          <div>
-            <span className="eyebrow">Start here</span>
-            <h2 id="start-heading">Choose what happened</h2>
-          </div>
-          <p>We’ll guide you through the right next step.</p>
-        </div>
         <div className="journey-choices student-journey-choices">
           <Link className="journey-choice" href="/portal/search">
             <span className="journey-choice__icon">
@@ -77,11 +53,8 @@ export default async function UserPortal() {
             </span>
             <span className="journey-choice__copy">
               <small>Search first</small>
-              <h3>I lost something</h3>
-              <p>
-                Check recently found items. If yours is not listed, create a
-                missing-item report.
-              </p>
+              <h2>I lost something</h2>
+              <p>Search first, then report it if there’s no match.</p>
             </span>
             <span className="journey-choice__arrow" aria-hidden="true">
               <ArrowRight size={22} />
@@ -93,14 +66,46 @@ export default async function UserPortal() {
             </span>
             <span className="journey-choice__copy">
               <small>Help return it</small>
-              <h3>I found something</h3>
-              <p>
-                Record where and when you found it so the owner can recognize
-                it.
-              </p>
+              <h2>I found something</h2>
+              <p>Help return an item to its owner.</p>
             </span>
             <span className="journey-choice__arrow" aria-hidden="true">
               <ArrowRight size={22} />
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      <section
+        className="student-dashboard__activity"
+        aria-labelledby="activity-heading"
+      >
+        <div className="student-section-heading student-section-heading--row">
+          <h2 id="activity-heading">Your activity</h2>
+          <Link className="student-section-link" href="/portal/activity">
+            View all <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+        <div className="student-dashboard__summary">
+          <Link href="/portal/reports">
+            <ClipboardList size={18} aria-hidden="true" />
+            <span>
+              <strong>{myReports?.length ?? "—"}</strong>
+              <small>My reports</small>
+            </span>
+          </Link>
+          <Link href="/portal/claims">
+            <ShieldCheck size={18} aria-hidden="true" />
+            <span>
+              <strong>{myClaims?.length ?? "—"}</strong>
+              <small>Requests</small>
+            </span>
+          </Link>
+          <Link href="/portal/updates">
+            <Bell size={18} aria-hidden="true" />
+            <span>
+              <strong>{updateCount?.unread ?? "—"}</strong>
+              <small>Unread updates</small>
             </span>
           </Link>
         </div>

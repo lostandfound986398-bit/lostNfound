@@ -12,6 +12,7 @@ import {
   LogOut,
   Mail,
   Search,
+  Settings,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { Brand } from "./brand";
@@ -97,7 +98,18 @@ export function PortalHeader({
           >
             <CircleUserRound size={24} aria-hidden="true" />
           </summary>
-          <div className="account-menu__panel">
+          <div
+            className="account-menu__panel"
+            onClick={(event) => {
+              if (
+                event.target instanceof Element &&
+                event.target.closest("a") &&
+                account.current
+              ) {
+                account.current.open = false;
+              }
+            }}
+          >
             <div className="account-menu__heading">
               <span className="account-menu__avatar" aria-hidden="true">
                 <CircleUserRound size={26} />
@@ -122,9 +134,14 @@ export function PortalHeader({
               </div>
             </dl>
             <div className="account-menu__actions">
+              <Link href="/portal/profile">
+                <CircleUserRound size={18} aria-hidden="true" /> Profile
+              </Link>
+              <Link href="/portal/profile#account-settings">
+                <Settings size={18} aria-hidden="true" /> Account settings
+              </Link>
               <Link href="/portal/help">
-                <LifeBuoy size={18} aria-hidden="true" /> Help &amp; Faculty
-                Office
+                <LifeBuoy size={18} aria-hidden="true" /> Help &amp; FAQ
               </Link>
               <form action={logout}>
                 <button type="submit">

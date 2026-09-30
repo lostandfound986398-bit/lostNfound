@@ -2768,6 +2768,9 @@ body:has(.admin-drawer[open]) {
   }
 }
 /* Student dashboard experience */
+.portal {
+  padding-bottom: 116px;
+}
 .portal-header {
   position: sticky;
   top: 0;
@@ -2779,6 +2782,125 @@ body:has(.admin-drawer[open]) {
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 8px 30px rgba(8, 38, 76, 0.06);
   backdrop-filter: blur(16px);
+}
+.portal-nav.device-nav {
+  position: fixed;
+  z-index: 50;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: min(calc(100vw - 32px), 580px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 8px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(8, 38, 76, 0.14);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 50px rgba(8, 38, 76, 0.22);
+  backdrop-filter: blur(18px);
+}
+.portal-nav.device-nav > a {
+  min-width: 0;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 6px;
+  border-radius: 15px;
+  font-size: 0.72rem;
+  text-align: center;
+}
+.portal-nav.device-nav > a[aria-current="page"] {
+  box-shadow: inset 0 -3px var(--red-600);
+}
+.profile-trigger {
+  width: 48px;
+  height: 48px;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 50% !important;
+  color: white;
+  background: var(--red-800);
+  box-shadow: inset 0 -3px var(--red-600);
+}
+.account-menu[open] > .profile-trigger {
+  color: var(--red-950);
+  background: var(--red-100);
+}
+.account-menu__panel {
+  top: calc(100% + 10px);
+  width: min(330px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: 16px;
+}
+.account-menu__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.account-menu__avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: var(--red-950);
+  background: var(--red-100);
+}
+.account-menu__heading small,
+.account-menu__heading strong {
+  display: block;
+}
+.account-menu__heading small {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.account-menu__heading strong {
+  overflow-wrap: anywhere;
+}
+.account-menu__details {
+  display: grid;
+  gap: 13px;
+  margin: 16px 0;
+}
+.account-menu__details div {
+  min-width: 0;
+}
+.account-menu__details dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.account-menu__details dd {
+  margin: 5px 0 0 23px;
+  overflow-wrap: anywhere;
+  font-size: 0.78rem;
+}
+.account-menu__role {
+  text-transform: capitalize;
+}
+.account-menu__actions {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.account-menu__actions form {
+  margin: 0;
+}
+.account-menu__actions form button {
+  color: var(--red-700);
+  font-weight: 750;
 }
 .student-dashboard {
   padding-top: 32px;
@@ -3093,6 +3215,25 @@ body:has(.admin-drawer[open]) {
 @media (max-width: 760px) {
   .portal-header {
     padding: 12px 16px;
+  }
+  .portal-nav.device-nav {
+    inset: auto auto max(10px, env(safe-area-inset-bottom)) 50%;
+    width: calc(100vw - 20px);
+    gap: 3px;
+    padding: 7px;
+    border-radius: 20px;
+  }
+  .portal-nav.device-nav > a {
+    min-height: 56px;
+    padding-inline: 2px;
+    font-size: 0.68rem;
+  }
+  .portal:has(input:focus, textarea:focus, select:focus) .device-nav {
+    display: none;
+  }
+  .profile-trigger {
+    width: 44px;
+    height: 44px;
   }
   .student-dashboard {
     padding: 16px 16px 32px;

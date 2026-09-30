@@ -3,11 +3,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
+  BadgeCheck,
   Bell,
   CircleUserRound,
   House,
+  LifeBuoy,
   ListChecks,
   LogOut,
+  Mail,
   Search,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
@@ -15,9 +18,13 @@ import { Brand } from "./brand";
 
 export function PortalHeader({
   displayName,
+  email,
+  role,
   unreadCount = 0,
 }: {
   displayName: string;
+  email: string;
+  role: "STUDENT" | "FACULTY" | "STAFF" | "ADMIN";
   unreadCount?: number;
 }) {
   const pathname = usePathname();
@@ -25,6 +32,15 @@ export function PortalHeader({
   useEffect(() => {
     if (account.current) account.current.open = false;
   }, [pathname]);
+  useEffect(() => {
+    function closeAccountMenu(event: PointerEvent) {
+      if (account.current && !account.current.contains(event.target as Node)) {
+        account.current.open = false;
+      }
+    }
+    document.addEventListener("pointerdown", closeAccountMenu);
+    return () => document.removeEventListener("pointerdown", closeAccountMenu);
+  }, []);
   const links = [
     {
       label: "Home",
@@ -65,28 +81,6 @@ export function PortalHeader({
       </a>
       <header className="portal-header">
         <Brand href="/portal" />
-        <nav className="portal-nav device-nav" aria-label="Student navigation">
-          {links.map(({ label, href, icon: Icon, active }) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-            >
-              <span className="nav-icon">
-                <Icon size={22} aria-hidden="true" />
-                {label === "Updates" && unreadCount > 0 && (
-                  <span
-                    className="unread-badge"
-                    aria-label={`${unreadCount} unread updates`}
-                  >
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </nav>
         <details
           className="account-menu"
           ref={account}
@@ -97,21 +91,72 @@ export function PortalHeader({
             }
           }}
         >
-          <summary aria-label="Account and help">
+          <summary
+            className="profile-trigger"
+            aria-label={`Open profile menu for ${displayName}`}
+          >
             <CircleUserRound size={24} aria-hidden="true" />
-            <span>Account</span>
           </summary>
           <div className="account-menu__panel">
-            <strong>{displayName}</strong>
-            <Link href="/portal/help">Help &amp; custody office</Link>
-            <form action={logout}>
-              <button type="submit">
-                <LogOut size={18} aria-hidden="true" /> Log out
-              </button>
-            </form>
+            <div className="account-menu__heading">
+              <span className="account-menu__avatar" aria-hidden="true">
+                <CircleUserRound size={26} />
+              </span>
+              <div>
+                <small>Profile details</small>
+                <strong>{displayName}</strong>
+              </div>
+            </div>
+            <dl className="account-menu__details">
+              <div>
+                <dt>
+                  <Mail size={16} aria-hidden="true" /> Email
+                </dt>
+                <dd>{email}</dd>
+              </div>
+              <div>
+                <dt>
+                  <BadgeCheck size={16} aria-hidden="true" /> Account type
+                </dt>
+                <dd className="account-menu__role">{role.toLowerCase()}</dd>
+              </div>
+            </dl>
+            <div className="account-menu__actions">
+              <Link href="/portal/help">
+                <LifeBuoy size={18} aria-hidden="true" /> Help &amp; Faculty
+                Office
+              </Link>
+              <form action={logout}>
+                <button type="submit">
+                  <LogOut size={18} aria-hidden="true" /> Log out
+                </button>
+              </form>
+            </div>
           </div>
         </details>
       </header>
+      <nav className="portal-nav device-nav" aria-label="Student navigation">
+        {links.map(({ label, href, icon: Icon, active }) => (
+          <Link
+            key={href}
+            href={href}
+            aria-current={active ? "page" : undefined}
+          >
+            <span className="nav-icon">
+              <Icon size={22} aria-hidden="true" />
+              {label === "Updates" && unreadCount > 0 && (
+                <span
+                  className="unread-badge"
+                  aria-label={`${unreadCount} unread updates`}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </span>
+            <span>{label}</span>
+          </Link>
+        ))}
+      </nav>
     </>
   );
 }

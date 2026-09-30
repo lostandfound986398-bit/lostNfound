@@ -19,6 +19,8 @@ export default async function PortalLayout({
     <div className="portal">
       <PortalHeader
         displayName={profile.displayName}
+        email={profile.email}
+        role={profile.role}
         unreadCount={counts?.unread ?? 0}
       />
       <div id="portal-main" tabIndex={-1}>

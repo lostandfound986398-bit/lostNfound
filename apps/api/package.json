@@ -7,7 +7,7 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test dist/modules/auth/auth.service.spec.js dist/modules/reports/reports.service.spec.js"
+    "test": "npm run build && node --test dist/modules/auth/auth.service.spec.js dist/modules/reports/reports.service.spec.js dist/modules/admin/admin.service.spec.js"
   },
   "dependencies": {
     "@lost-found/contracts": "*",

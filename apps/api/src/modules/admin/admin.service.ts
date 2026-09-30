@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { DatabaseService } from "../../database/database.service";
 import type { LocalUser } from "../auth/auth.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
+import { CaseMessageDto } from "./dto/case-message.dto";
 
 @Injectable()
 export class AdminService {
@@ -30,14 +31,71 @@ export class AdminService {
     );
     const matches = await this.database.query(
       `SELECT other.id, other.title, other.status AS "reportStatus", m.status,
-              m.score, m.matched_reasons AS reasons, l.name AS location
+              m.score, m.matched_reasons AS reasons, l.name AS location,
+              other.color, c.name AS category, other.occurred_at AS "occurredAt",
+              other.public_description AS description,
+              (SELECT storage_key FROM item_images WHERE report_id = other.id ORDER BY is_primary DESC, created_at LIMIT 1) AS "storageKey"
        FROM item_matches m
        JOIN item_reports other ON other.id = CASE WHEN m.lost_report_id = $1 THEN m.found_report_id ELSE m.lost_report_id END
        JOIN locations l ON l.id = other.location_id
+       JOIN categories c ON c.id = other.category_id
        WHERE (m.lost_report_id = $1 OR m.found_report_id = $1) AND m.status <> 'DISMISSED'
        ORDER BY m.score DESC`, [id],
     );
-    return { ...result.rows[0], images: images.rows, matches: matches.rows };
+    const claims = await this.database.query(
+      `SELECT cl.id, cl.report_id AS "reportId", cl.status, cl.ownership_answers AS "ownershipAnswers",
+              cl.created_at AS "createdAt", cl.review_notes AS "reviewNotes", r.title,
+              u.display_name AS "claimantName"
+       FROM claims cl JOIN item_reports r ON r.id = cl.report_id JOIN users u ON u.id = cl.claimant_id
+       WHERE cl.report_id = $1 OR (cl.claimant_id = (SELECT reporter_id FROM item_reports WHERE id = $1 AND type = 'LOST')
+         AND EXISTS (SELECT 1 FROM item_matches m WHERE m.lost_report_id = $1 AND m.found_report_id = cl.report_id))
+       ORDER BY cl.created_at DESC`, [id],
+    );
+    const history = await this.database.query(
+      `SELECT action, created_at AS "createdAt", after AS details FROM audit_logs
+       WHERE (entity_type = 'REPORT' AND entity_id = $1)
+          OR (entity_type = 'CLAIM' AND entity_id = ANY($2::text[]))
+       ORDER BY created_at DESC`, [id, claims.rows.map(claim => claim.id)],
+    );
+    return { ...result.rows[0], images: images.rows, matches: matches.rows, claims: claims.rows, history: history.rows };
+  }
+
+  async messageReporter(user: LocalUser, id: string, input: CaseMessageDto) {
+    this.admin(user);
+    return this.database.transaction(async database => {
+      const report = (await database.query("SELECT id, reporter_id, title, type, status FROM item_reports WHERE id = $1 FOR UPDATE", [id])).rows[0];
+      if (!report) throw new NotFoundException("Report not found.");
+      if (!["OPEN", "MATCHED"].includes(report.status)) throw new BadRequestException("This report is no longer awaiting matching. Review its requests instead.");
+      let title = "Please add identifying details";
+      let body = `Please open your report for "${report.title}" and use Edit report to add private identifying details so staff can verify it. Do not put sensitive details in the public description.`;
+      if (input.kind === "MATCH") {
+        if (report.type !== "LOST" || !input.matchId || input.reviewed !== true) throw new BadRequestException("Compare the items and confirm you reviewed the match first.");
+        const match = (await database.query(
+          `SELECT r.id, r.title, r.status, r.reporter_id FROM item_reports r
+           JOIN item_matches m ON m.found_report_id = r.id
+           WHERE m.lost_report_id = $1 AND r.id = $2 AND m.status <> 'DISMISSED' AND r.type = 'FOUND' FOR UPDATE OF r`, [id, input.matchId],
+        )).rows[0];
+        if (!match || !["OPEN", "MATCHED"].includes(match.status) || match.reporter_id === report.reporter_id) throw new BadRequestException("This item is not available for a new ownership request.");
+        title = "Staff found a possible match";
+        body = `Staff reviewed a possible match for your lost "${report.title}". Open "${match.title}" and compare the details. If it looks like yours, submit an ownership request with proof. This is a suggestion, not approval to collect the item.`;
+      }
+      const type = input.kind === "MATCH" ? "REPORT_MATCH_INVITATION" : "REPORT_DETAILS_REQUESTED";
+      const duplicate = await database.query(
+        `SELECT id FROM notifications WHERE user_id = $1 AND type = $2 AND data->>'reportId' = $3
+         AND coalesce(data->>'matchedReportId', '') = $4 LIMIT 1`, [report.reporter_id, type, id, input.kind === "MATCH" ? input.matchId : ""],
+      );
+      if (duplicate.rows.length) return { message: "The student has already been notified. Check the case history." };
+      const data = { reportId: id, ...(input.kind === "MATCH" ? { matchedReportId: input.matchId } : {}) };
+      await database.query(
+        `INSERT INTO notifications (id, user_id, type, title, body, data, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5::jsonb, NOW())`, [report.reporter_id, type, title, body, JSON.stringify(data)],
+      );
+      await database.query(
+        `INSERT INTO audit_logs (id, actor_id, action, entity_type, entity_id, after, created_at)
+         VALUES (gen_random_uuid(), $1, $2, 'REPORT', $3, $4::jsonb, NOW())`, [user.id, type, id, JSON.stringify(data)],
+      );
+      return { message: "Sent to the student's Updates. The action is recorded in this case history." };
+    });
   }
 
   private admin(user: LocalUser) {

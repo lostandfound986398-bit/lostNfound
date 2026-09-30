@@ -51,7 +51,16 @@ export default async function UpdatesPage() {
               <h2>{update.title}</h2>
               <p>{update.body}</p>
               <div className="journey-actions">
-                {update.type === "MATCH_FOUND" ? (
+                {update.type === "REPORT_MATCH_INVITATION" ||
+                update.type === "REPORT_DETAILS_REQUESTED" ? (
+                  <Link
+                    href={`/portal/items/${encodeURIComponent(update.data?.matchedReportId ?? update.data?.reportId ?? "")}`}
+                  >
+                    {update.type === "REPORT_MATCH_INVITATION"
+                      ? "Inspect possible match →"
+                      : "Open report to add details →"}
+                  </Link>
+                ) : update.type === "MATCH_FOUND" ? (
                   <Link
                     href={
                       update.targetReportId

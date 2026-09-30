@@ -36,6 +36,16 @@ A student's separate missing-item report is not automatically closed by collecti
 
 ## What to check during acceptance
 
+### Admin report workspace
+
+- Open a report to see its contextual **Next step**, compact summary, and available matches. Expand **Compare items side by side** to compare category, color, location, date, and description.
+- For a lost report, confirm that you compared a suggested found item before selecting **Notify student of possible match**. This sends an in-app Updates message, not an email and not an ownership approval. Repeating the same invitation does not send another message.
+- If private identifying details are missing, **Request identifying details** sends the reporter a link to edit their report. Only open/matched reports can receive these actions.
+- **Ownership requests for this case** shows requests on this found report, or this lost-report owner's requests on suggested found reports. Review decisions here; **View all requests** opens the full queue.
+- Reserved, returned, and archived matches are separated from available suggestions. Returned items cannot be offered for collection again.
+- **Case history** combines submission dates with recorded notification and claim-review events. A related collection does not automatically close a separate lost report.
+- Verify narrow/mobile layouts, comparison disclosure, pending/error feedback, and student Updates links with test accounts before live acceptance. Automated message tests use mocks and do not notify real students.
+
 - Opening report API routes without a bearer token returns 401.
 - A finder cannot request their own item. Items under review or already returned do not offer the ownership form.
 - A second request submitted from a stale page receives an explanation, without creating another active claim.

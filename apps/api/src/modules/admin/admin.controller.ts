@@ -3,6 +3,7 @@ import type { Response } from "express";
 import { AuthGuard, type AuthenticatedRequest } from "../auth/auth.guard";
 import { AdminService } from "./admin.service";
 import { CreateAnnouncementDto } from "./dto/create-announcement.dto";
+import { CaseMessageDto } from "./dto/case-message.dto";
 
 @UseGuards(AuthGuard)
 @Controller("admin")
@@ -17,6 +18,11 @@ export class AdminController {
   @Get("dashboard")
   dashboard(@Req() req: AuthenticatedRequest) {
     return this.admin.dashboard(req.user);
+  }
+
+  @Post("reports/:id/message")
+  messageReporter(@Req() req: AuthenticatedRequest, @Param("id", new ParseUUIDPipe()) id: string, @Body() input: CaseMessageDto) {
+    return this.admin.messageReporter(req.user, id, input);
   }
 
   @Get("users")

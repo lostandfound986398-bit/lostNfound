@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { DatabaseService } from "../../database/database.service";
@@ -22,28 +26,48 @@ interface DirectoryRow {
   user_id: string | null;
 }
 
+interface RegistrationRecord {
+  record: DirectoryRow;
+  createdForRegistration: boolean;
+}
+
 @Injectable()
 export class AuthService {
   private readonly publicClient: SupabaseClient;
   private readonly adminClient: SupabaseClient;
   private readonly siteUrl: string;
 
-  constructor(config: ConfigService, private readonly database: DatabaseService) {
+  constructor(
+    config: ConfigService,
+    private readonly database: DatabaseService,
+  ) {
     const url = config.getOrThrow<string>("SUPABASE_URL");
-    this.publicClient = createClient(url, config.getOrThrow<string>("SUPABASE_PUBLISHABLE_KEY"), {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    this.adminClient = createClient(url, config.getOrThrow<string>("SUPABASE_SECRET_KEY"), {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    this.publicClient = createClient(
+      url,
+      config.getOrThrow<string>("SUPABASE_PUBLISHABLE_KEY"),
+      {
+        auth: { persistSession: false, autoRefreshToken: false },
+      },
+    );
+    this.adminClient = createClient(
+      url,
+      config.getOrThrow<string>("SUPABASE_SECRET_KEY"),
+      {
+        auth: { persistSession: false, autoRefreshToken: false },
+      },
+    );
     this.siteUrl = config.get("SITE_URL", "http://localhost:3000");
   }
 
   private normalizeName(value: string) {
-    return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+    return value
+      .normalize("NFKC")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLocaleLowerCase();
   }
 
-  async findDirectoryRecord(role: string, schoolId: string, fullName: string) {
+  private async directoryRecordBySchoolId(schoolId: string) {
     const result = await this.database.query<DirectoryRow>(
       `SELECT mp.id, mp.school_id, mp.full_name, mp.email, mp.role,
               mp.is_active, u.id AS user_id
@@ -52,23 +76,114 @@ export class AuthService {
         WHERE mp.school_id = $1`,
       [schoolId.trim().toUpperCase()],
     );
-    const record = result.rows[0];
+    return result.rows[0];
+  }
+
+  async findDirectoryRecord(role: string, schoolId: string, fullName: string) {
+    const record = await this.directoryRecordBySchoolId(schoolId);
     if (
       !record ||
       !record.is_active ||
       record.role !== role ||
       this.normalizeName(record.full_name) !== this.normalizeName(fullName)
     ) {
-      throw new UnauthorizedException("The supplied school record could not be verified.");
+      throw new UnauthorizedException(
+        "The supplied school record could not be verified.",
+      );
     }
-    if (record.user_id) throw new ConflictException("This school record is already registered.");
+    if (record.user_id)
+      throw new ConflictException("This school record is already registered.");
     return record;
   }
 
+  private async registrationRecord(
+    input: RegisterDto,
+  ): Promise<RegistrationRecord> {
+    if (input.role !== "STUDENT") {
+      return {
+        record: await this.findDirectoryRecord(
+          input.role,
+          input.schoolId,
+          input.fullName,
+        ),
+        createdForRegistration: false,
+      };
+    }
+
+    const schoolId = input.schoolId.trim().toUpperCase();
+    const email = input.email.trim().toLowerCase();
+    const existing = await this.directoryRecordBySchoolId(schoolId);
+    if (existing) {
+      if (
+        !existing.is_active ||
+        existing.role !== "STUDENT" ||
+        this.normalizeName(existing.full_name) !==
+          this.normalizeName(input.fullName) ||
+        !existing.email ||
+        existing.email.toLowerCase() !== email
+      ) {
+        throw new UnauthorizedException(
+          "This School ID is reserved for a different school record.",
+        );
+      }
+      if (existing.user_id)
+        throw new ConflictException(
+          "This school record is already registered.",
+        );
+      return { record: existing, createdForRegistration: false };
+    }
+
+    try {
+      const result = await this.database.query<DirectoryRow>(
+        `INSERT INTO master_people
+           (school_id, full_name, email, role, is_active, import_batch, created_at, updated_at)
+         VALUES ($1, $2, $3, 'STUDENT', TRUE, 'self-registration', NOW(), NOW())
+         RETURNING id, school_id, full_name, email, role, is_active,
+                   NULL::uuid AS user_id`,
+        [schoolId, input.fullName.trim().replace(/\s+/g, " "), email],
+      );
+      return { record: result.rows[0]!, createdForRegistration: true };
+    } catch (error) {
+      if (
+        !error ||
+        typeof error !== "object" ||
+        !("code" in error) ||
+        error.code !== "23505"
+      ) {
+        throw error;
+      }
+      // A concurrent request may have reserved the same School ID first.
+      return {
+        record: await this.findDirectoryRecord(
+          "STUDENT",
+          schoolId,
+          input.fullName,
+        ),
+        createdForRegistration: false,
+      };
+    }
+  }
+
+  private async removeUnlinkedSelfRegistration(recordId: string) {
+    await this.database.query(
+      `DELETE FROM master_people mp
+        WHERE mp.id = $1
+          AND mp.import_batch = 'self-registration'
+          AND NOT EXISTS (SELECT 1 FROM users u WHERE u.master_person_id = mp.id)`,
+      [recordId],
+    );
+  }
+
   async register(input: RegisterDto) {
-    const record = await this.findDirectoryRecord(input.role, input.schoolId, input.fullName);
-    if (!record.email || record.email.toLowerCase() !== input.email.trim().toLowerCase()) {
-      throw new UnauthorizedException("The supplied school record could not be verified.");
+    const { record, createdForRegistration } =
+      await this.registrationRecord(input);
+    if (
+      !record.email ||
+      record.email.toLowerCase() !== input.email.trim().toLowerCase()
+    ) {
+      throw new UnauthorizedException(
+        "The supplied school record could not be verified.",
+      );
     }
 
     const { data, error } = await this.adminClient.auth.admin.createUser({
@@ -81,7 +196,11 @@ export class AuthService {
         display_name: record.full_name,
       },
     });
-    if (error || !data.user) throw new ConflictException(error?.message ?? "Account creation failed.");
+    if (error || !data.user) {
+      if (createdForRegistration)
+        await this.removeUnlinkedSelfRegistration(record.id);
+      throw new ConflictException(error?.message ?? "Account creation failed.");
+    }
 
     try {
       await this.database.query(
@@ -91,22 +210,29 @@ export class AuthService {
       );
     } catch (databaseError) {
       await this.adminClient.auth.admin.deleteUser(data.user.id);
+      if (createdForRegistration)
+        await this.removeUnlinkedSelfRegistration(record.id);
       throw databaseError;
     }
 
-    return { message: "Registration received. Check your email to confirm the account." };
+    return {
+      message:
+        "Registration received. Check your email to confirm the account.",
+    };
   }
 
   async authenticate(accessToken: string): Promise<LocalUser> {
     const { data, error } = await this.publicClient.auth.getUser(accessToken);
-    if (error || !data.user) throw new UnauthorizedException("Invalid or expired session.");
-    const result = await this.database.query<LocalUser & { display_name: string }>(
-      `SELECT id, email, display_name, role, status FROM users WHERE id = $1`,
-      [data.user.id],
-    );
+    if (error || !data.user)
+      throw new UnauthorizedException("Invalid or expired session.");
+    const result = await this.database.query<
+      LocalUser & { display_name: string }
+    >(`SELECT id, email, display_name, role, status FROM users WHERE id = $1`, [
+      data.user.id,
+    ]);
     const user = result.rows[0];
-    if (!user || user.status !== "ACTIVE") throw new UnauthorizedException("Account is not active.");
+    if (!user || user.status !== "ACTIVE")
+      throw new UnauthorizedException("Account is not active.");
     return { ...user, displayName: user.display_name };
   }
 }
-

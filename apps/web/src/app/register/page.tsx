@@ -28,8 +28,8 @@ export default async function RegisterPage({
         <span className="eyebrow">Account verification</span>
         <h1>Join your campus community</h1>
         <p>
-          First, choose your role and enter the ID found in the official CBEA
-          directory.
+          Students can create an account directly with their School ID. Faculty
+          and Staff details must match the official CBEA directory.
         </p>
 
         {success === "check_email" && (
@@ -100,8 +100,8 @@ export default async function RegisterPage({
                   color: "#7f1d1d",
                 }}
               >
-                Make sure your Role, School ID, Full Name, and Email match an
-                active record in the master list exactly.
+                This School ID may already belong to a different account, or the
+                Faculty/Staff details do not match an active directory record.
               </p>
             </div>
           </div>
@@ -176,8 +176,8 @@ export default async function RegisterPage({
           <div className="info-box" style={{ marginTop: "1rem" }}>
             <BadgeInfo size={20} />
             <span>
-              Your ID, name, role, and email must match an active record in the
-              official school master list.
+              Student accounts do not need a preloaded master-list record.
+              Existing School IDs and email addresses cannot be reused.
             </span>
           </div>
 

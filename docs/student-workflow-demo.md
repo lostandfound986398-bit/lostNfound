@@ -17,7 +17,7 @@ The student portal now includes visible report/request progress, possible-match 
 - Use an existing verified student account, a second verified account for the finder, and an administrator account. Registering still requires a matching active school master-list record.
 - Start the API and web app with `npm run dev`, or use their deployed URLs.
 - Confirm category/location seed data and the existing photo upload storage policy are installed.
-- In `apps/web/.env.local`, optionally set `LOST_FOUND_OFFICE`, `LOST_FOUND_EMAIL`, `LOST_FOUND_PHONE`, and `LOST_FOUND_HOURS`; restart the web app. The office defaults to the existing CBEA Building (Custody Office) wording. No phone, email, or hours are invented.
+- In `apps/web/.env.local`, optionally set `LOST_FOUND_OFFICE`, `LOST_FOUND_EMAIL`, `LOST_FOUND_PHONE`, and `LOST_FOUND_HOURS`; restart the web app. The office defaults to `CBEA Faculty Office`. Use the same `LOST_FOUND_OFFICE` value in the API so approval notifications and the Help page always agree. No phone, email, or hours are invented.
 
 ## Demonstration sequence
 

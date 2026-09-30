@@ -195,8 +195,9 @@ describe("Student report visibility and ownership eligibility", () => {
 
 function claimService(status: string, available = true) {
   const writes: string[] = [];
+  const writeValues: unknown[][] = [];
   const database = {
-    query: async (sql: string) => {
+    query: async (sql: string, values: unknown[] = []) => {
       if (sql.includes("SELECT cl.claimant_id"))
         return {
           rows: [
@@ -208,11 +209,21 @@ function claimService(status: string, available = true) {
       if (sql.startsWith("SELECT id FROM item_reports"))
         return { rows: available ? [{ id: "item" }] : [] };
       writes.push(sql);
+      writeValues.push(values);
       return { rows: sql.includes("RETURNING id") ? [{ id: "claim" }] : [] };
     },
     transaction: async <T>(work: (db: unknown) => Promise<T>) => work(database),
   };
-  return { service: new ClaimsService(database as never), writes };
+  return {
+    service: new ClaimsService(
+      database as never,
+      {
+        get: () => "CBEA Faculty Office",
+      } as never,
+    ),
+    writes,
+    writeValues,
+  };
 }
 
 describe("Ownership review safeguards", () => {
@@ -285,10 +296,30 @@ describe("Ownership review safeguards", () => {
     );
     assert.ok(writes.some((sql) => sql.includes("INSERT INTO notifications")));
   });
+  it("tells the student where to collect an approved item", async () => {
+    const { service, writes, writeValues } = claimService("PENDING");
+    await service.review(admin, "claim", {
+      status: "APPROVED",
+      notes: "Ask for Ms. Reyes.",
+    });
+    const notificationIndex = writes.findIndex((sql) =>
+      sql.includes("INSERT INTO notifications"),
+    );
+    assert.notEqual(notificationIndex, -1);
+    assert.match(
+      String(writeValues[notificationIndex]?.[2]),
+      /Claim your item at the CBEA Faculty Office/,
+    );
+    assert.match(
+      String(writeValues[notificationIndex]?.[3]),
+      /Bring your school ID.*Ask for Ms\. Reyes/,
+    );
+  });
   it("rejects replies to requests that are not waiting for information", async () => {
-    const service = new ClaimsService({
-      query: async () => ({ rows: [] }),
-    } as never);
+    const service = new ClaimsService(
+      { query: async () => ({ rows: [] }) } as never,
+      { get: () => "CBEA Faculty Office" } as never,
+    );
     await assert.rejects(
       service.reply(student, "claim", "More details"),
       /no longer waiting/,

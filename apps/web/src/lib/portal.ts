@@ -48,7 +48,7 @@ export const claimProgress: Record<string, { label: string; next: string }> = {
   },
   APPROVED: {
     label: "Approved for collection",
-    next: "Contact the lost-and-found staff to arrange collection. Bring your school ID; staff will record the handover.",
+    next: "Claim your item at the CBEA Faculty Office. Bring your school ID for verification; staff will record the handover.",
   },
   REJECTED: {
     label: "Not approved",

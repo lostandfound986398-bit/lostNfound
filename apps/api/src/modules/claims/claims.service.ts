@@ -4,13 +4,24 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { DatabaseService } from "../../database/database.service";
 import type { LocalUser } from "../auth/auth.service";
 import { CreateClaimDto, ReviewClaimDto } from "./dto/create-claim.dto";
 
 @Injectable()
 export class ClaimsService {
-  constructor(private readonly database: DatabaseService) {}
+  private readonly collectionOffice: string;
+
+  constructor(
+    private readonly database: DatabaseService,
+    config: ConfigService,
+  ) {
+    this.collectionOffice = config.get(
+      "LOST_FOUND_OFFICE",
+      "CBEA Faculty Office",
+    );
+  }
 
   async create(user: LocalUser, input: CreateClaimDto) {
     const statement = input.ownershipAnswers?.claimantStatement;
@@ -167,8 +178,11 @@ export class ClaimsService {
       let notifBody = `Your claim for ${record.title} has been updated to ${input.status}.`;
 
       if (input.status === "APPROVED") {
-        notifTitle = `Ownership request approved for collection`;
-        notifBody = `Your request for "${record.title}" is approved. Read the staff note in My ownership requests and check Help for custody office details. Bring your school ID for collection.`;
+        const staffInstructions = input.notes.trim()
+          ? ` Staff instructions: ${input.notes.trim()}`
+          : "";
+        notifTitle = `Claim your item at the ${this.collectionOffice}`;
+        notifBody = `Your ownership request for "${record.title}" was approved. Claim your item at the ${this.collectionOffice}. Bring your school ID for verification.${staffInstructions}`;
       } else if (input.status === "RELEASED") {
         notifTitle = `Item Successfully Released`;
         notifBody = `Your item "${record.title}" has been verified and officially RELEASED to you. It is now marked as returned to rightful owner.`;

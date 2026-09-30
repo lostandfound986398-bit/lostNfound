@@ -38,7 +38,7 @@ export default async function ClaimsPage() {
       <AdminPageHeader
         eyebrow="Ownership control"
         title="Claim verification & item release portal"
-        description="Review ownership answers, approve claims for CBEA Building pickup, and mark items as released upon identity verification."
+        description="Review ownership answers, notify students to claim approved items at the CBEA Faculty Office, and record release after identity verification."
         action={
           <a
             className="button button--ghost"
@@ -57,7 +57,7 @@ export default async function ClaimsPage() {
           <span className="trend">Awaiting review</span>
         </article>
         <article className="stat-card">
-          <small>Approved (CBEA Pickup)</small>
+          <small>Approved (Faculty Office)</small>
           <strong>{approvedCount}</strong>
           <span className="trend">Notified for pickup</span>
         </article>
@@ -155,7 +155,7 @@ export default async function ClaimsPage() {
                       <td data-label="Status" role="cell">
                         <span className={`status ${statusClass}`}>
                           {claim.status === "APPROVED"
-                            ? "Approved (CBEA Pickup)"
+                            ? "Approved (Faculty Office)"
                             : claim.status === "RELEASED"
                               ? "Released to Owner"
                               : claim.status.replace("_", " ")}

@@ -1,6 +1,5 @@
 export function StaffContact() {
-  const office =
-    process.env.LOST_FOUND_OFFICE || "CBEA Building (Custody Office)";
+  const office = process.env.LOST_FOUND_OFFICE || "CBEA Faculty Office";
   const email = process.env.LOST_FOUND_EMAIL;
   const phone = process.env.LOST_FOUND_PHONE;
   const hours = process.env.LOST_FOUND_HOURS;

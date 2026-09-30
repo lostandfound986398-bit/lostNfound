@@ -24,10 +24,12 @@ export default async function PortalLayout({
       <div id="portal-main" tabIndex={-1}>
         {children}
       </div>
-      <footer className="portal-content">
-        <Link href="/portal/help">
-          Need help? View the student guide and custody office details →
-        </Link>
+      <footer className="portal-footer">
+        <div>
+          <strong>Need help?</strong>
+          <span>View the student guide and Faculty Office details.</span>
+        </div>
+        <Link href="/portal/help">Open help →</Link>
       </footer>
     </div>
   );

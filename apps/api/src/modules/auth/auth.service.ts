@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   ConflictException,
   Injectable,
@@ -136,11 +137,16 @@ export class AuthService {
     try {
       const result = await this.database.query<DirectoryRow>(
         `INSERT INTO master_people
-           (school_id, full_name, email, role, is_active, import_batch, created_at, updated_at)
-         VALUES ($1, $2, $3, 'STUDENT', TRUE, 'self-registration', NOW(), NOW())
+           (id, school_id, full_name, email, role, is_active, import_batch, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'STUDENT', TRUE, 'self-registration', NOW(), NOW())
          RETURNING id, school_id, full_name, email, role, is_active,
                    NULL::uuid AS user_id`,
-        [schoolId, input.fullName.trim().replace(/\s+/g, " "), email],
+        [
+          randomUUID(),
+          schoolId,
+          input.fullName.trim().replace(/\s+/g, " "),
+          email,
+        ],
       );
       return { record: result.rows[0]!, createdForRegistration: true };
     } catch (error) {

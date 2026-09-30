@@ -75,7 +75,8 @@ describe("Student self-registration", () => {
 
     assert.equal(createUserCalls(), 1);
     assert.equal(writes.length, 2);
-    assert.deepEqual(writes[0]?.values, [
+    assert.match(String(writes[0]?.values[0]), /^[0-9a-f-]{36}$/);
+    assert.deepEqual(writes[0]?.values.slice(1), [
       "230617",
       "Ian Dave Punayo",
       "ianpunayo09@gmail.com",
